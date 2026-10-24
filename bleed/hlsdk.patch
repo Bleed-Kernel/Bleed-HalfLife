@@ -1,0 +1,21 @@
+diff --git a/public/build.h b/public/build.h
+index a9489250..27d22c99 100644
+--- a/public/build.h
++++ b/public/build.h
+@@ -59,6 +59,7 @@ Then you can use another oneliner to query all variables:
+ #undef XASH_ARMv6
+ #undef XASH_ARMv7
+ #undef XASH_ARMv8
++#undef XASH_BLEED
+ #undef XASH_BIG_ENDIAN
+ #undef XASH_DOS4GW
+ #undef XASH_E2K
+@@ -141,6 +142,8 @@ Then you can use another oneliner to query all variables:
+ 		#define XASH_EMSCRIPTEN 1
+ 	#elif defined __gnu_hurd__
+ 		#define XASH_HURD 1
++	#elif defined __bleed__
++		#define XASH_BLEED 1
+ 	#else
+ 		#error
+ 	#endif

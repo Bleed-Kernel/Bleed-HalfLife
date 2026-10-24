@@ -1,0 +1,55 @@
+diff --git a/include/build.h b/include/build.h
+index b92c51e..82c264d 100644
+--- a/include/build.h
++++ b/include/build.h
+@@ -59,6 +59,7 @@ Then you can use another oneliner to query all variables:
+ #undef XASH_ARMv6
+ #undef XASH_ARMv7
+ #undef XASH_ARMv8
++#undef XASH_BLEED
+ #undef XASH_BIG_ENDIAN
+ #undef XASH_DOS4GW
+ #undef XASH_E2K
+@@ -148,6 +149,8 @@ Then you can use another oneliner to query all variables:
+ 		#define XASH_SUNOS 1
+ 	#elif defined __gnu_hurd__
+ 		#define XASH_HURD 1
++	#elif defined __bleed__
++		#define XASH_BLEED 1
+ 	#else
+ 		#error
+ 	#endif
+diff --git a/include/buildenums.h b/include/buildenums.h
+index c91f5e6..b7fcf1a 100644
+--- a/include/buildenums.h
++++ b/include/buildenums.h
+@@ -61,6 +61,7 @@ For more information, please refer to <http://unlicense.org/>
+ #define PLATFORM_PSP        18
+ #define PLATFORM_IOS    	19
+ #define PLATFORM_PS4        20
++#define PLATFORM_BLEED      21
+ 
+ #if XASH_WIN32
+ 	#define XASH_PLATFORM PLATFORM_WIN32
+@@ -100,6 +101,8 @@ For more information, please refer to <http://unlicense.org/>
+ 	#define XASH_PLATFORM PLATFORM_PSP
+ #elif XASH_PS4
+ 	#define XASH_PLATFORM PLATFORM_PS4
++#elif XASH_BLEED
++	#define XASH_PLATFORM PLATFORM_BLEED
+ #else
+ 	#error
+ #endif
+diff --git a/src/library_suffix.c b/src/library_suffix.c
+index 8f2b21a..29a0be5 100644
+--- a/src/library_suffix.c
++++ b/src/library_suffix.c
+@@ -81,6 +81,8 @@ const char *Q_PlatformStringByID( const int platform )
+ 		return "psp";
+ 	case PLATFORM_PS4:
+ 		return "ps4";
++	case PLATFORM_BLEED:
++		return "bleed";
+ 	}
+ 
+ 	return "unknown";

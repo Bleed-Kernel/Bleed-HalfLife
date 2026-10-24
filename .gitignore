@@ -1,0 +1,9 @@
+bin/
+build/
+external/
+*.o
+*.a
+.DS_Store
+libcrime/
+libaudio/
+hlx/

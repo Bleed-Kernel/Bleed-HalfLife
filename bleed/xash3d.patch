@@ -1,0 +1,187 @@
+diff --git a/common/backends.h b/common/backends.h
+index e0cc14bc..c1f720e0 100644
+--- a/common/backends.h
++++ b/common/backends.h
+@@ -21,18 +21,21 @@ GNU General Public License for more details.
+ #define VIDEO_PSP     2
+ #define VIDEO_FBDEV   3
+ #define VIDEO_DOS     4
++#define VIDEO_BLEED   5
+ 
+ // audio backends (XASH_SOUND)
+ #define SOUND_NULL     0
+ #define SOUND_SDL      1
+ #define SOUND_PSP      2
+ #define SOUND_ALSA     3
++#define SOUND_BLEED    4
+ 
+ // input (XASH_INPUT)
+ #define INPUT_NULL    0
+ #define INPUT_SDL     1
+ #define INPUT_PSP     2
+ #define INPUT_EVDEV   3
++#define INPUT_BLEED   4
+ 
+ // timer (XASH_TIMER)
+ #define TIMER_NULL  0 // not used
+diff --git a/common/defaults.h b/common/defaults.h
+index 7cd9c1f9..fb6af1a1 100644
+--- a/common/defaults.h
++++ b/common/defaults.h
+@@ -42,6 +42,10 @@ SETUP BACKENDS DEFINITIONS
+ 	#elif XASH_DOS4GW
+ 		#define XASH_VIDEO     VIDEO_DOS
+ 		#define XASH_REDUCE_FD 1 // usually only 10-20 fds available
++	#elif XASH_BLEED // a window on the bleed desktop
++		#define XASH_VIDEO     VIDEO_BLEED
++		#define XASH_INPUT     INPUT_BLEED
++		#define XASH_SOUND     SOUND_BLEED
+ 	#elif XASH_PSP
+ 		#define XASH_VIDEO     VIDEO_PSP
+ 		#define XASH_INPUT     INPUT_PSP
+@@ -137,6 +141,10 @@ Default build-depended cvar and constant values
+ 	// set up windowed by default on Windows to avoid problems with
+ 	// Xbox Game Bar
+ 	#define DEFAULT_FULLSCREEN   "0"
++#elif XASH_BLEED
++	#define DEFAULT_FULLSCREEN   "0"
++	#define DEFAULT_MODE_WIDTH   640
++	#define DEFAULT_MODE_HEIGHT  480
+ #elif XASH_NSWITCH
+ 	#define DEFAULT_TOUCH_ENABLE "1"
+ 	#define DEFAULT_M_IGNORE     "1"
+diff --git a/engine/common/filesystem_engine.c b/engine/common/filesystem_engine.c
+index 9ed62eb2..1f7ae0f3 100644
+--- a/engine/common/filesystem_engine.c
++++ b/engine/common/filesystem_engine.c
+@@ -314,6 +314,19 @@ static qboolean FS_DetermineRootDirectory( char *out, size_t size )
+ 	Sys_Error( "couldn't determine current directory: %s", SDL_GetError( ));
+ #endif // !( XASH_POSIX || XASH_WIN32 )
+ 	return false;
++#elif XASH_BLEED
++	// the desktop starts programs in /, so the nvme disk unless we were started next to the game
++	string gamedir;
++
++	if( getcwd( out, size ))
++	{
++		Q_snprintf( gamedir, sizeof( gamedir ), "%s/%s", out, host.default_gamedir );
++		if( !access( gamedir, F_OK ))
++			return true;
++	}
++
++	Q_strncpy( out, "/mnt/nvme/hlx", size );
++	return true;
+ #else // generic case
+ 	if( getcwd( out, size ))
+ 		return true;
+diff --git a/engine/common/net_ws.c b/engine/common/net_ws.c
+index d139dff7..3253d89d 100644
+--- a/engine/common/net_ws.c
++++ b/engine/common/net_ws.c
+@@ -310,6 +310,21 @@ static int NET_ThreadStart( void *ununsed )
+ 	NET_ResolveThread();
+ 	return 0;
+ }
++#elif XASH_BLEED
++// no threads on bleed, starting one always fails so names get looked up in place
++#define mutex_create( x )     (( x ) = 0 )
++#define mutex_destroy( x )    (( void )( x ))
++#define mutex_lock( x )       (( void )( x ))
++#define mutex_unlock( x )     (( void )( x ))
++#define create_thread( thread, pfn ) (( thread ) = 0, ( void )( pfn ), 0 )
++#define detach_thread( x )    (( void )( x ))
++typedef int mutex_t;
++typedef int thread_t;
++static void *NET_ThreadStart( void *unused )
++{
++	NET_ResolveThread();
++	return NULL;
++}
+ #elif !XASH_WIN32
+ #include <pthread.h>
+ #define mutex_create( x )     pthread_mutex_init( &( x ), NULL )
+diff --git a/engine/common/whereami.c b/engine/common/whereami.c
+index 3eb3f086..dc94d0a1 100644
+--- a/engine/common/whereami.c
++++ b/engine/common/whereami.c
+@@ -839,6 +839,49 @@ int WAI_PREFIX(getModulePath)(char* out, int capacity, int* dirname_length)
+   return -1;
+ }
+ 
++#elif defined(__bleed__)
++
++#include <unistd.h>
++#include <string.h>
++#include <limits.h>
++#include <bleed/syscalls.h>
++
++WAI_FUNCSPEC
++int WAI_PREFIX(getExecutablePath)(char* out, int capacity, int* dirname_length)
++{
++  char buffer[PATH_MAX];
++  int length, i;
++
++  if (_taskpath((uint64_t)getpid(), buffer, sizeof(buffer)) != 0)
++    return -1;
++
++  length = (int)strlen(buffer);
++  if (length <= capacity)
++  {
++    memcpy(out, buffer, length);
++
++    if (dirname_length)
++    {
++      for (i = length - 1; i >= 0; --i)
++      {
++        if (out[i] == '/')
++        {
++          *dirname_length = i;
++          break;
++        }
++      }
++    }
++  }
++
++  return length;
++}
++
++WAI_FUNCSPEC
++int WAI_PREFIX(getModulePath)(char* out, int capacity, int* dirname_length)
++{
++  return WAI_PREFIX(getExecutablePath)(out, capacity, dirname_length);
++}
++
+ #elif defined(__SWITCH__) || defined(__vita__) || defined(__EMSCRIPTEN__)
+ 
+ /* Not possible on this platform */
+diff --git a/engine/platform/platform.h b/engine/platform/platform.h
+index b093ec90..39c2b6ff 100644
+--- a/engine/platform/platform.h
++++ b/engine/platform/platform.h
+@@ -289,7 +289,7 @@ static inline void Platform_Vibrate2( float time, int low_freq, int high_freq, u
+ 
+ ==============================================================================
+ */
+-#if XASH_SDL // only SDL based backends implements these functions
++#if XASH_SDL || XASH_BLEED // only SDL based backends implements these functions
+ void Platform_PreCreateMove( void );
+ void GAME_EXPORT Platform_GetMousePos( int *x, int *y );
+ void GAME_EXPORT Platform_SetMousePos( int x, int y );
+@@ -313,7 +313,7 @@ static inline void GAME_EXPORT Platform_GetMousePos( int *x, int *y )
+ }
+ #endif
+ 
+-#if XASH_SDL || XASH_DOS
++#if XASH_SDL || XASH_DOS || XASH_BLEED
+ void Platform_RunEvents( void );
+ void Platform_MouseMove( float *x, float *y );
+ #else
+@@ -327,7 +327,7 @@ static inline void Platform_MouseMove( float *x, float *y )
+ 
+ // rect is the area where the text is edited, in render coordinates, so the platform
+ // might keep it visible when it shows the on-screen keyboard over the game
+-#if XASH_SDL >= 2 || XASH_PSVITA || XASH_DOS || XASH_USE_EVDEV
++#if XASH_SDL >= 2 || XASH_PSVITA || XASH_DOS || XASH_USE_EVDEV || XASH_BLEED
+ void Platform_EnableTextInput( qboolean enable, int x, int y, int w, int h );
+ #else
+ static inline void Platform_EnableTextInput( qboolean enable, int x, int y, int w, int h ) { }
