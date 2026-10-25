@@ -248,7 +248,7 @@ MENU_OBJS   = $(call obj,menu,$(MENU_SRCS))
 SERVER_LIBS = filesystem_stdio server
 GAME_LIBS   = filesystem_stdio server client menu ref_soft
 
-.PHONY: all source patches blibc crime audio install initrd clean distclean
+.PHONY: all source patches blibc crime audio install disk clean distclean
 
 all: source blibc crime audio
 	@$(MAKE) --no-print-directory -j$(JOBS) $(GAME) $(SERVER) $(BUILD)/extras.pk3
@@ -513,14 +513,17 @@ install: all
 	cp $(GAME) $(SERVER) $(KERNEL_DIR)/initrd/bin/
 
 GAME_DATA = hlx
-initrd: source
-	@test -n "$(INITRD)" || { echo "make initrd INITRD=<the kernels initrd folder>"; exit 1; }
+
+disk: source
+	@test -n "$(DISK)" || { echo "make disk DISK=<folder the data partition is made from>"; exit 1; }
 	@test -d $(GAME_DATA)/valve || { echo "[HALFLIFE] ERROR: no game files, put Half-Lifes valve folder in $(abspath $(GAME_DATA))/valve"; exit 1; }
+	@test -f $(GAME) -a -f $(SERVER) || { echo "[HALFLIFE] ERROR: build it first, $(GAME) and $(SERVER) arent there"; exit 1; }
 	@$(MAKE) --no-print-directory $(BUILD)/extras.pk3
-	@echo "[HALFLIFE] Copying the game files into the initrd"
-	@mkdir -p $(INITRD)/halflife
-	@rsync -a --delete --exclude .DS_Store --exclude '._*' --exclude valve/extras.pk3 $(GAME_DATA)/ $(INITRD)/halflife/
-	@cp $(BUILD)/extras.pk3 $(INITRD)/halflife/valve/extras.pk3
+	@echo "[HALFLIFE] Copying the game onto the data partition"
+	@mkdir -p $(DISK)/halflife
+	@rsync -a --delete --exclude .DS_Store --exclude '._*' --exclude valve/extras.pk3 $(GAME_DATA)/ $(DISK)/halflife/
+	@cp $(BUILD)/extras.pk3 $(DISK)/halflife/valve/extras.pk3
+	@cp $(GAME) $(SERVER) $(DISK)/halflife/
 
 clean:
 	rm -rf $(BUILD) bin

@@ -69,7 +69,7 @@ index 9ed62eb2..66757ee4 100644
  #endif // !( XASH_POSIX || XASH_WIN32 )
  	return false;
 +#elif XASH_BLEED
-+	// the desktop starts programs in /, so try next to the binary before the nvme disk,
++	// the desktop starts programs in /, so try next to the binary before the data partition,
 +	// otherwise a copy on a usb stick opened from Cabinet never finds its valve folder
 +	string gamedir;
 +	char *slash;
@@ -89,7 +89,7 @@ index 9ed62eb2..66757ee4 100644
 +			return true;
 +	}
 +
-+	Q_strncpy( out, "/initrd/halflife", size );
++	Q_strncpy( out, "/mnt/data/halflife", size );
 +	return true;
  #else // generic case
  	if( getcwd( out, size ))
