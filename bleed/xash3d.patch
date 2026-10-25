@@ -51,16 +51,28 @@ index 7cd9c1f9..fb6af1a1 100644
  	#define DEFAULT_TOUCH_ENABLE "1"
  	#define DEFAULT_M_IGNORE     "1"
 diff --git a/engine/common/filesystem_engine.c b/engine/common/filesystem_engine.c
-index 9ed62eb2..1f7ae0f3 100644
+index 9ed62eb2..66757ee4 100644
 --- a/engine/common/filesystem_engine.c
 +++ b/engine/common/filesystem_engine.c
-@@ -314,6 +314,19 @@ static qboolean FS_DetermineRootDirectory( char *out, size_t size )
+@@ -26,6 +26,9 @@ GNU General Public License for more details.
+ #include "common.h"
+ #include "library.h"
+ #include "platform/platform.h"
++#if XASH_BLEED
++#include <bleed/syscalls.h>
++#endif
+ 
+ #if XASH_WIN32
+ #include <direct.h>
+@@ -314,6 +317,29 @@ static qboolean FS_DetermineRootDirectory( char *out, size_t size )
  	Sys_Error( "couldn't determine current directory: %s", SDL_GetError( ));
  #endif // !( XASH_POSIX || XASH_WIN32 )
  	return false;
 +#elif XASH_BLEED
-+	// the desktop starts programs in /, so the nvme disk unless we were started next to the game
++	// the desktop starts programs in /, so try next to the binary before the nvme disk,
++	// otherwise a copy on a usb stick opened from Cabinet never finds its valve folder
 +	string gamedir;
++	char *slash;
 +
 +	if( getcwd( out, size ))
 +	{
@@ -69,7 +81,15 @@ index 9ed62eb2..1f7ae0f3 100644
 +			return true;
 +	}
 +
-+	Q_strncpy( out, "/mnt/nvme/hlx", size );
++	if( _taskpath( (uint64_t)getpid( ), out, size ) == 0 && ( slash = Q_strrchr( out, '/' )) != NULL )
++	{
++		*slash = '\0';
++		Q_snprintf( gamedir, sizeof( gamedir ), "%s/%s", out, host.default_gamedir );
++		if( !access( gamedir, F_OK ))
++			return true;
++	}
++
++	Q_strncpy( out, "/initrd/halflife", size );
 +	return true;
  #else // generic case
  	if( getcwd( out, size ))
