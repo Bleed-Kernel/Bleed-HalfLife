@@ -51,7 +51,7 @@ index 7cd9c1f9..fb6af1a1 100644
  	#define DEFAULT_TOUCH_ENABLE "1"
  	#define DEFAULT_M_IGNORE     "1"
 diff --git a/engine/common/filesystem_engine.c b/engine/common/filesystem_engine.c
-index 9ed62eb2..66757ee4 100644
+index 9ed62eb2..0f451f1f 100644
 --- a/engine/common/filesystem_engine.c
 +++ b/engine/common/filesystem_engine.c
 @@ -26,6 +26,9 @@ GNU General Public License for more details.
@@ -95,7 +95,7 @@ index 9ed62eb2..66757ee4 100644
  	if( getcwd( out, size ))
  		return true;
 diff --git a/engine/common/net_ws.c b/engine/common/net_ws.c
-index d139dff7..3253d89d 100644
+index d139dff7..80a2056b 100644
 --- a/engine/common/net_ws.c
 +++ b/engine/common/net_ws.c
 @@ -310,6 +310,21 @@ static int NET_ThreadStart( void *ununsed )
@@ -103,12 +103,12 @@ index d139dff7..3253d89d 100644
  	return 0;
  }
 +#elif XASH_BLEED
-+// no threads on bleed, starting one always fails so names get looked up in place
++// no threads on bleed, the "thread" runs the lookup on the spot and the next call picks up the answer
 +#define mutex_create( x )     (( x ) = 0 )
 +#define mutex_destroy( x )    (( void )( x ))
 +#define mutex_lock( x )       (( void )( x ))
 +#define mutex_unlock( x )     (( void )( x ))
-+#define create_thread( thread, pfn ) (( thread ) = 0, ( void )( pfn ), 0 )
++#define create_thread( thread, pfn ) (( thread ) = 0, ( pfn )( NULL ), 1 )
 +#define detach_thread( x )    (( void )( x ))
 +typedef int mutex_t;
 +typedef int thread_t;
@@ -120,6 +120,19 @@ index d139dff7..3253d89d 100644
  #elif !XASH_WIN32
  #include <pthread.h>
  #define mutex_create( x )     pthread_mutex_init( &( x ), NULL )
+@@ -2016,7 +2031,12 @@ void NET_Init( void )
+ 	NET_InitializeCriticalSections();
+ 
+ 	net.allow_ip = !Sys_CheckParm( "-noip" );
++#if XASH_BLEED
++	// bleed only speaks ipv4, -ip6 is there for when that changes
++	net.allow_ip6 = Sys_CheckParm( "-ip6" );
++#else
+ 	net.allow_ip6 = !Sys_CheckParm( "-noip6" );
++#endif
+ 
+ 	// specify custom host port
+ 	if( Sys_GetParmFromCmdLine( "-port", cmd ) && Q_isdigit( cmd ))
 diff --git a/engine/common/whereami.c b/engine/common/whereami.c
 index 3eb3f086..dc94d0a1 100644
 --- a/engine/common/whereami.c
