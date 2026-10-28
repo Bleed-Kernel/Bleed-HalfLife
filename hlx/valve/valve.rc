@@ -1,0 +1,85 @@
+//developer 1 //show developer messages in the console
+s_refgain 0.4
+s_refdelay 4
+s_occfactor 0.25
+s_verbwet 0.25
+s_distance 60
+
+gl_texturemode GL_LINEAR_MIPMAP_LINEAR //disable ugly 'stairs effect' on textures
+MP3FadeTime 0.0 //prevent music from playing forever
+
+//auto bunnyhop
+//alias +bhop "alias _special _h;_h"
+//alias _h "+jump;wait;-jump;wait;special"
+//alias -bhop "alias _special"
+
+//manual bunnyhop
+alias "+bunnyhop" "+jump; wait; -jump; wait; +jump; wait;-jump; wait; +jump; wait; -jump; wait; +jump; wait; -jump; wait; +jump; wait; -jump; wait; +jump"
+alias "-bunnyhop" "-jump"
+
+//longjump
+alias "+lj" "wait;+duck;wait;wait;+jump;wait"
+alias "-lj" "-jump;wait;-duck"
+
+//climb script
+alias +climb "+duck;wait;-duck;wait;+duck"
+alias -climb "-duck"
+
+//walk toggle
+alias ch "ch1"
+alias ch1 "+speed; cl_forwardspeed 400; cl_sidespeed 400; cl_backspeed 400; alias ch ch0"
+alias ch0 "-speed; cl_forwardspeed 500; cl_sidespeed 500; cl_backspeed 500; alias ch ch1"
+
+//xbow
+alias +xbow "wait;+attack2;wait;wait;+attack;wait;-attack;wait;-attack2"
+alias -xbow "lastinv; weapon_crossbow"
+
+//fov
+alias fov "fov1"
+alias fov1 "default_fov 115;alias fov fov2;echo FOV 115"
+alias fov2 "default_fov 120;alias fov fov3;echo FOV 120"
+alias fov3 "default_fov 125;alias fov fov4;echo FOV 125"
+alias fov4 "default_fov 105;alias fov fov5;echo FOV 105"
+alias fov5 "default_fov 110;alias fov fov1;echo FOV 110"
+
+//score+stopsound+gl_spriteblend
+alias +ssgl "+showscores;stopsound;gl_spriteblend 0"
+alias -ssgl "-showscores"
+
+//models
+alias	"gman" 			"model gman"
+alias	"zombie" 		"model zombie"
+alias	"gina" 			"model gina"
+alias	"scientist" 	"model scientist"
+alias	"robo" 			"model robo"
+alias	"hgrunt" 		"model hgrunt"
+alias	"barney" 		"model barney"
+alias	"recon"	 		"model recon"
+alias 	"art" 			"model ~ARTWAR"
+alias 	"blue" 			"model blue"
+alias	"red" 			"model red"
+alias	"tsugumi"		"model tsugumi"
+alias 	"suntza"		"model suntza"
+alias 	"asdf"			"model asdf"
+alias	"pot"	 		"model PotGA"
+alias	"gordon"		"model gordon"
+alias	"lil"			"model ~lilium"
+alias	"mag"			"model ~magnolia"
+alias 	"spec" 			"spectate"
+
+// load the language configuration
+exec language.cfg
+
+// Setup custom controller
+exec joystick.cfg
+
+// run a user script file if present
+exec autoexec.cfg
+
+// progaming settings
+exec hldm.cfg
+echo "** Supported by https://HLDM.cz - best site about Half-life"
+//
+// stuff command line statements
+//
+stuffcmds

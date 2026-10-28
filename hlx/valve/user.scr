@@ -1,0 +1,111 @@
+// NOTE:  THIS FILE IS AUTOMATICALLY REGENERATED, 
+//DO NOT EDIT THIS HEADER, YOUR COMMENTS WILL BE LOST IF YOU DO
+// User options script
+//
+// Format:
+//  Version [float]
+//  Options description followed by 
+//  Options defaults
+//
+// Option description syntax:
+//
+//  "cvar" { "Prompt" { type [ type info ] } { default } }
+//
+//  type = 
+//   BOOL   (a yes/no toggle)
+//   STRING
+//   NUMBER
+//   LIST
+//
+// type info:
+// BOOL                 no type info
+// NUMBER       min max range, use -1 -1 for no limits
+// STRING       no type info
+// LIST          delimited list of options value pairs
+//
+//
+// default depends on type
+// BOOL is "0" or "1"
+// NUMBER is "value"
+// STRING is "value"
+// LIST is "index", where index "0" is the first element of the list
+
+
+// Half-Life User Info Configuration Layout Script (stores last settings chosen, too)
+// File generated:  Fri Feb 17 11:29:00 AM
+//
+//
+// Cvar	-	Setting
+
+VERSION 1.0
+
+DESCRIPTION INFO_OPTIONS
+{
+	"fps_max"
+	{
+		"Maximum FPS"
+		{ NUMBER 0.000000 300.000000 }
+		{ "101.000000" }
+	}
+	
+	"mp_decals"
+	{
+		"Number of decals (bullets, blood)"
+		{ NUMBER 0.000000 4096.000000 }
+		{ "100.000000" }
+	}
+
+	"cl_timeout"
+	{
+		"Connection timeout (sec.)"
+		{ NUMBER 1.000000 3600.000000 }
+		{ "101.000000" }
+	}
+
+	"hud_takeshots"
+	{
+		"Screenshot at the end of map"
+		{ BOOL }
+		{ "1" }
+	}
+
+	"net_graph"
+	{
+		"Net_graph mod"
+		{
+			LIST
+			"0 (Off)" "0"
+			"1" "1"
+			"2" "2"
+			"3 (Standard)" "3"
+		}
+		{ "0.000000" }
+	}
+
+	"net_graphpos"
+	{
+		"Position of net_graph "
+		{
+			LIST
+			"Left" "0"
+			"Right" "1"
+			"Middle" "2"
+		}
+		{ "0.000000" }
+	}
+
+	"cl_download_ingame"
+	{
+		"Download from server"
+		{ BOOL }
+		{ "1" }
+	}
+
+	"con_color"
+	{
+		"Text color (''R G B'')"
+		{ STRING }
+		{ "10 200 100" }
+	}
+
+}
